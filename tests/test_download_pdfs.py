@@ -128,3 +128,6 @@ class TestHanserDownload:
         result = get_filename(23, "Was tun?")
         assert isinstance(result, str)
         assert result == "Chapter23_Was tun.pdf"
+        result = get_filename(12, "")
+        assert isinstance(result, str)
+        assert result == "Chapter12.pdf"
