@@ -7,10 +7,136 @@ Typical usage example:
 
 import sys
 import os
+import typing
 import logging
+import re
 import argparse
 import requests
+import bs4
 from bs4 import BeautifulSoup
+
+
+def format_chapter_name(element: bs4.element.Tag) -> str:
+    """Extracts the text from a h5 element
+
+    Args:
+        element (bs4.element.Tag): An h5 html element
+
+    Returns:
+        Stripped string of the text of the element"""
+    return element.text.strip()
+
+
+def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
+    """Extracts a list of chapter names from a soup from hanser-elibrary
+
+    For the Hanser Verlag the Chapter titles can be found like this (26.12.2022 9:07):
+    <h5>Die Konkubinenwirtschaft</h5>
+    document.querySelector("#\\31 0\\.3139\\/9783446418240\\.fm > h5")
+    /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[1]/div/div/div[2]/div[1]/a/h5
+    Get all h5 headings that do not have a class and get their inner text:
+    Should result in a list like this:
+    ['Die Konkubinenwirtschaft', 'Nicht lange Fackeln', 'Auf und Nieder immer wieder', 'Immer flüssig', 'Wahaha', 'Stets starkes Signal', 'Mit Mann und Maus',
+    'QQ ohne IQ', 'Akku leer', 'Bohren für China', 'Über den Wolken', 'Haier und Higher', 'Störsender und Chinesin',
+    'Hochstapeln leicht gemacht', 'Meisterzeit', 'Literaturverzeichnis']
+
+    Args:
+        soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
+
+    Returns:
+        A list of strings corresponding to the individual chapters of the book
+    """
+    # Extract all h5 elements without an explicity class
+    # Take their text and put it into a list for indexing
+    return list(map(format_chapter_name, soup.find_all("h5", {"class": ""})))
+
+
+def format_chapter_link(element: bs4.element.Tag) -> str:
+    """Extracts and formats the url from a link ('a') element
+
+    Args:
+        element (bs4.element.Tag): An 'a' element
+
+    Returns:
+        A formatted version of the url contained in the link element"""
+    # Extract the raw link from the element
+    base_link = element.get("href")  # /doi/epdf/10.3139/9783446456013.012
+    # Add the proper domain in fron of it to get a functioning url
+    full_link = (
+        "https://www.hanser-elibrary.com" + base_link
+    )  # https://www.hanser-elibrary.com/doi/epdf/10.3139/9783446456013.012
+    # Replace the 'epdf' with 'pdf' to get the url of the raw pdf without the custom viewer around it
+    direct_link = full_link.replace(
+        "epdf", "pdf"
+    )  # https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.012
+    return direct_link
+
+
+def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
+    """Extracts a list of links to individual chapter pdfs from a soup from hanser-elibrary
+
+    Find all hyperlinks present on webpage
+    For the Hanser Verlag the pdf link elements look like this (26.12.2022 8:48):
+    <a title="PDF" class="btn btn--light-bg" href="/doi/epdf/10.3139/9783446456013.012"><i aria-hidden="true" class="icon-PDF inline-icon"></i><span class="text">PDF</span></a>
+    The full xpath/jspath of the elements are (26.12.2022 8:48):
+    /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[14]/div/div/div[3]/ul/li[2]/a
+    document.querySelector("#pb-page-content > div > main > div.container.shift-up-content > div.page__content.padding-wrapper.table-of-content-page > div > div.col-lg-8.col-md-8 >
+    div.toc-container > div.table-of-content > div:nth-child(1) > div > div > div.issue-item__footer > ul > li:nth-child(2) > a")
+
+    Args:
+        soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
+
+    Returns:
+        A list of strings corresponding to the pdf links of the individual chapters of the book"""
+    pdf_link_elements = filter(
+        lambda link: link.get("title") == "PDF", soup.find_all("a")
+    )
+    link_urls = list(
+        map(
+            format_chapter_link,
+            pdf_link_elements,
+        )
+    )
+    return link_urls
+
+
+def get_chapters(soup: BeautifulSoup) -> typing.Iterable[tuple[int, str, str]]:
+    """Create an iterable over chapter indices, names and links
+
+    Args:
+        soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
+
+    Returns:
+        Iterable over (index,name,link) of chapters on the webpage"""
+    # Get the names of all the chapter
+    names = get_chapter_names_from_soup(soup)
+    # Get the urls for all the chapter pdfs
+    links = get_chapter_pdf_links_from_soup(soup)
+    # If number of names and chapter links matches return an iterable
+    # over (index,name,url) for each chapter
+    indices = range(1, len(links) + 1)
+    if len(names) == len(links):
+        return zip(indices, names, links)
+    # If there is a mismatch return an iterable over
+    # (index, '', url) for each chapter
+    return zip(indices, [""] * len(links), links)
+
+
+def get_filename(index: int, chapter_name: str) -> str:
+    """Create a filename for each chapter based on the chapter index and name
+
+    Args:
+        index (int): The index of the chapter
+        chapter_name (str): The extracted name for the chapter
+                            Can be '' if no name was extracted
+
+    Returns:
+        The filename that the pdf of the chapter should be saved to"""
+    if chapter_name != "":
+        # Remove characters that windows does not allow in file names
+        chapter_name = re.sub(r'[\\/*?:"<>|]', "", chapter_name)
+        return f"Chapter{index}_{chapter_name}.pdf"
+    return f"Chapter{index}.pdf"
 
 
 def main(args):
@@ -27,7 +153,7 @@ def main(args):
     parser.add_argument(
         "-u",
         "--url",
-        default="https://downloads.hanser.de/index.asp?isbn=978-3-446-43085-3&nav_id=763475834&nav_page=2",
+        default="https://www.hanser-elibrary.com/isbn/9783446453968",
         help="Url to the book to download",
     )
     options = parser.parse_args(args)
@@ -67,48 +193,19 @@ def main(args):
     # Parse text obtained
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # For the Hanser Verlag the Chapter titles can be found like this (26.12.2022 9:07):
-    # <h5>Die Konkubinenwirtschaft</h5>
-    # document.querySelector("#\\31 0\\.3139\\/9783446418240\\.fm > h5")
-    # /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[1]/div/div/div[2]/div[1]/a/h5
-    # Get all h5 headings that do not have a class and get their inner text:
-    # Should result in a list like this:
-    # ['Die Konkubinenwirtschaft', 'Nicht lange Fackeln', 'Auf und Nieder immer wieder', 'Immer flüssig', 'Wahaha', 'Stets starkes Signal', 'Mit Mann und Maus',
-    # 'QQ ohne IQ', 'Akku leer', 'Bohren für China', 'Über den Wolken', 'Haier und Higher', 'Störsender und Chinesin',
-    # 'Hochstapeln leicht gemacht', 'Meisterzeit', 'Literaturverzeichnis']
-    # Order should be the same as that of the links
-    names = list(map(lambda h5: h5.text.strip(), soup.find_all("h5", {"class": ""})))
+    names = get_chapter_names_from_soup(soup)
 
-    # Find all hyperlinks present on webpage
-    # link_url = link.get("href") # /doi/epdf/10.3139/9783446456013.012
-    # link_url = "https://www.hanser-elibrary.com" + link_url # https://www.hanser-elibrary.com/doi/epdf/10.3139/9783446456013.012
-    # link_url = link_url.replace("epdf", "pdf") # https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.012
-    # For the Hanser Verlag the pdf link elements look like this (26.12.2022 8:48):
-    # <a title="PDF" class="btn btn--light-bg" href="/doi/epdf/10.3139/9783446456013.012"><i aria-hidden="true" class="icon-PDF inline-icon"></i><span class="text">PDF</span></a>
-    # The full xpath/jspath of the elements are (26.12.2022 8:48):
-    # /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[14]/div/div/div[3]/ul/li[2]/a
-    # document.querySelector("#pb-page-content > div > main > div.container.shift-up-content > div.page__content.padding-wrapper.table-of-content-page > div > div.col-lg-8.col-md-8 >
-    # div.toc-container > div.table-of-content > div:nth-child(1) > div > div > div.issue-item__footer > ul > li:nth-child(2) > a")
-    links = list(
-        map(
-            lambda link: ("https://www.hanser-elibrary.com" + link.get("href")).replace(
-                "epdf", "pdf"
-            ),
-            filter(lambda link: link.get("title") == "PDF", soup.find_all("a")),
-        )
-    )
+    links = get_chapter_pdf_links_from_soup(soup)
 
     if len(names) != len(links):
         raise AssertionError(
             "Could not find an equal number of chapter names and link!"
         )
-    i = 0
 
     # From all links check for pdf link and
     # if present download file
-    for link_url in links:
-        i += 1
-        logging.info("Downloading file: %s", i)
+    for index, name, link_url in get_chapters(soup):
+        logging.info("Downloading file: %s", index)
 
         logging.info("Downloading pdf from link: %s", link_url)
 
@@ -116,13 +213,11 @@ def main(args):
         response = requests.get(link_url, timeout=100)
 
         # Write content in pdf file
-        filename = os.path.join(options.dir, f"Chapter{i}_{names[i-1]}.pdf")
+        filename = os.path.join(options.dir, get_filename(index, name))
         logging.info("Saving file to %s", filename)
-        # Add try except for invalid file names
-        # OSError: [Errno 22] Invalid argument: 'D:\\Downloads\\Hanser\\Chapter7_EIN GEGENMODELL IM WERDEN?.pdf'
         with open(filename, "wb") as pdf:
             pdf.write(response.content)
-        logging.info("File %s downloaded", i)
+        logging.info("File %s downloaded", index)
 
     logging.info("All PDF files downloaded")
 
