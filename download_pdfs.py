@@ -11,7 +11,7 @@ import logging
 import argparse
 import requests
 from bs4 import BeautifulSoup
- 
+
 
 def main(args):
     """Downloads demos from hltv.org"""
@@ -55,13 +55,14 @@ def main(args):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-
-    logging.info("Running with output directory: %s and URL: %s", options.dir, options.url)
+    logging.info(
+        "Running with output directory: %s and URL: %s", options.dir, options.url
+    )
     # URL from which pdfs to be downloaded
     url = options.url
 
     # Requests URL and get response object
-    response = requests.get(url)
+    response = requests.get(url, timeout=100)
 
     # Parse text obtained
     soup = BeautifulSoup(response.text, "html.parser")
@@ -86,12 +87,21 @@ def main(args):
     # <a title="PDF" class="btn btn--light-bg" href="/doi/epdf/10.3139/9783446456013.012"><i aria-hidden="true" class="icon-PDF inline-icon"></i><span class="text">PDF</span></a>
     # The full xpath/jspath of the elements are (26.12.2022 8:48):
     # /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[14]/div/div/div[3]/ul/li[2]/a
-    # document.querySelector("#pb-page-content > div > main > div.container.shift-up-content > div.page__content.padding-wrapper.table-of-content-page > div > div.col-lg-8.col-md-8 > 
+    # document.querySelector("#pb-page-content > div > main > div.container.shift-up-content > div.page__content.padding-wrapper.table-of-content-page > div > div.col-lg-8.col-md-8 >
     # div.toc-container > div.table-of-content > div:nth-child(1) > div > div > div.issue-item__footer > ul > li:nth-child(2) > a")
-    links = list(map(lambda link: ("https://www.hanser-elibrary.com" + link.get("href")).replace("epdf","pdf"), filter(lambda link: link.get("title") == "PDF", soup.find_all("a"))))
-    
+    links = list(
+        map(
+            lambda link: ("https://www.hanser-elibrary.com" + link.get("href")).replace(
+                "epdf", "pdf"
+            ),
+            filter(lambda link: link.get("title") == "PDF", soup.find_all("a")),
+        )
+    )
+
     if len(names) != len(links):
-        raise AssertionError("Could not find an equal number of chapter names and link!")
+        raise AssertionError(
+            "Could not find an equal number of chapter names and link!"
+        )
     i = 0
 
     # From all links check for pdf link and
@@ -101,9 +111,9 @@ def main(args):
         logging.info("Downloading file: %s", i)
 
         logging.info("Downloading pdf from link: %s", link_url)
-        
+
         # Get response object for link
-        response = requests.get(link_url)
+        response = requests.get(link_url, timeout=100)
 
         # Write content in pdf file
         filename = os.path.join(options.dir, f"Chapter{i}_{names[i-1]}.pdf")
