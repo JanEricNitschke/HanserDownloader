@@ -1,4 +1,7 @@
+"""Tests download_pdfs.py"""
+
 from unittest.mock import patch
+from bs4 import BeautifulSoup
 from download_pdfs import (
     get_chapter_names_from_soup,
     format_chapter_name,
@@ -7,7 +10,6 @@ from download_pdfs import (
     get_chapters,
     get_filename,
 )
-from bs4 import BeautifulSoup
 
 
 class TestHanserDownload:
