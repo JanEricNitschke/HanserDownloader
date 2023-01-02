@@ -132,15 +132,16 @@ def get_filename(index: int, chapter_name: str) -> str:
 
     Returns:
         The filename that the pdf of the chapter should be saved to"""
+    fill_length = 3
     if chapter_name != "":
         # Remove characters that windows does not allow in file names
         chapter_name = re.sub(r'[\\/*?:"<>|]', "", chapter_name)
-        return f"Chapter{index}_{chapter_name}.pdf"
-    return f"Chapter{index}.pdf"
+        return f"{str(index).zfill(fill_length)}_{chapter_name}.pdf"
+    return f"{str(index).zfill(fill_length)}.pdf"
 
 
 def main(args):
-    """Downloads demos from hltv.org"""
+    """Downloads pdf files from hanser elibrary"""
     parser = argparse.ArgumentParser("Analyze the early mid fight on inferno")
     parser.add_argument(
         "-d", "--debug", action="store_true", default=False, help="Enable debug output."
@@ -162,8 +163,8 @@ def main(args):
     if not os.path.exists(options.dir):
         os.makedirs(options.dir)
 
-    logfile = os.path.join(options.dir, "download.log")
     if options.debug:
+        logfile = os.path.join(options.dir, "download.log")
         logging.basicConfig(
             filename=logfile,
             encoding="utf-8",
@@ -184,23 +185,22 @@ def main(args):
     logging.info(
         "Running with output directory: %s and URL: %s", options.dir, options.url
     )
+
     # URL from which pdfs to be downloaded
     url = options.url
+
+    # Do this instead of command line arguments so that it can be bundled as a simple exe that can be clicked
+    # It then opens a command line asking for the input
+    # Alternatively it can also be bundled without this
+    # Then it has to be actively called from the command line and have the arguments entered there
+    # But it still does not require a python installation then
+    # url = input("Enter the url you want to download things from:")
 
     # Requests URL and get response object
     response = requests.get(url, timeout=100)
 
     # Parse text obtained
     soup = BeautifulSoup(response.text, "html.parser")
-
-    names = get_chapter_names_from_soup(soup)
-
-    links = get_chapter_pdf_links_from_soup(soup)
-
-    if len(names) != len(links):
-        raise AssertionError(
-            "Could not find an equal number of chapter names and link!"
-        )
 
     # From all links check for pdf link and
     # if present download file
