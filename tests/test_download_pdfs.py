@@ -126,10 +126,10 @@ class TestHanserDownload:
         """Tests get_filename"""
         result = get_filename(3, "test")
         assert isinstance(result, str)
-        assert result == "Chapter3_test.pdf"
+        assert result == "003_test.pdf"
         result = get_filename(23, "Was tun?")
         assert isinstance(result, str)
-        assert result == "Chapter23_Was tun.pdf"
+        assert result == "023_Was tun.pdf"
         result = get_filename(12, "")
         assert isinstance(result, str)
-        assert result == "Chapter12.pdf"
+        assert result == "012.pdf"
