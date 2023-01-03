@@ -61,6 +61,10 @@ def format_chapter_link(element: bs4.element.Tag) -> str:
         A formatted version of the url contained in the link element"""
     # Extract the raw link from the element
     base_link = element.get("href")  # /doi/epdf/10.3139/9783446456013.012
+    if not isinstance(base_link, str):
+        raise TypeError(
+            f"Did not find a singular href value. Expected a string but got {base_link} of type {type(base_link)} instead!"
+        )
     # Add the proper domain in fron of it to get a functioning url
     full_link = (
         "https://www.hanser-elibrary.com" + base_link
