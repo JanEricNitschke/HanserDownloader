@@ -8,9 +8,14 @@ Install dependencies with:
 pip install -r requirements.txt
 ```
 
-Run with:
+Run python version with:
 ```bash
 python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
+```
+
+Run exe version with:
+```bash
+download_pdfs.exe --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
 ```
 
 Test with:
