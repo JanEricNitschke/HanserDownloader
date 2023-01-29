@@ -146,7 +146,7 @@ def get_filename(index: int, chapter_name: str) -> str:
 
 def main(args):
     """Downloads pdf files from hanser elibrary"""
-    parser = argparse.ArgumentParser("Analyze the early mid fight on inferno")
+    parser = argparse.ArgumentParser("Downloads pdf files from hanser elibrary")
     parser.add_argument(
         "-d", "--debug", action="store_true", default=False, help="Enable debug output."
     )
