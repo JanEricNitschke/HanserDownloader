@@ -16,14 +16,14 @@ class TestHanserDownload:
     """Class to test download_pdfs.py"""
 
     def setup_class(self):
-        """Setup class getting a TicTacToe object"""
+        """Setup class getting a bs4 for the test html file"""
         with open(
             "tests/Big Data in der Praxis.html", "r", encoding="utf-8"
         ) as soup_file:
             self.soup = BeautifulSoup(soup_file, "html.parser")
 
     def teardown_class(self):
-        """Set tictactoe to None"""
+        """Set bs4 to None"""
         self.soup = None
 
     def test_format_chapter_name(self):
