@@ -15,8 +15,9 @@ python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanse
 
 Run exe version with:
 ```bash
-download_pdfs.exe --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
+download_pdfs.exe
 ```
+It will then prompt you for the directory and url.
 
 Test with:
 ```bash
