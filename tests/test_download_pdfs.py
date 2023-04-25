@@ -1,33 +1,35 @@
-"""Tests download_pdfs.py"""
+"""Tests download_pdfs.py."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, PropertyMock, patch
+
+import pytest
 from bs4 import BeautifulSoup
+
 from download_pdfs import (
-    get_chapter_names_from_soup,
-    format_chapter_name,
     format_chapter_link,
+    format_chapter_name,
+    get_chapter_names_from_soup,
     get_chapter_pdf_links_from_soup,
     get_chapters,
     get_filename,
+    make_request,
 )
 
 
 class TestHanserDownload:
-    """Class to test download_pdfs.py"""
+    """Class to test download_pdfs.py."""
 
     def setup_class(self):
-        """Setup class getting a bs4 for the test html file"""
-        with open(
-            "tests/Big Data in der Praxis.html", "r", encoding="utf-8"
-        ) as soup_file:
+        """Setup class getting a bs4 for the test html file."""
+        with open("tests/Big Data in der Praxis.html", encoding="utf-8") as soup_file:
             self.soup = BeautifulSoup(soup_file, "html.parser")
 
     def teardown_class(self):
-        """Set bs4 to None"""
+        """Set bs4 to None."""
         self.soup = None
 
     def test_format_chapter_name(self):
-        """Tests format_chapter_name"""
+        """Tests format_chapter_name."""
         tag = BeautifulSoup("<h5>Big Data in der Praxis</h5>", "html.parser").h5
         expected_result = "Big Data in der Praxis"
         result = format_chapter_name(tag)
@@ -35,7 +37,7 @@ class TestHanserDownload:
         assert result == expected_result
 
     def test_get_chapter_names_from_soup(self):
-        """Tests get_chapter_names_from_soup"""
+        """Tests get_chapter_names_from_soup."""
         expected_list = [
             "Big Data in der Praxis",
             "Einleitung",
@@ -45,7 +47,7 @@ class TestHanserDownload:
             "NoSQL und HBase",
             "Data Warehousing mit Hive",
             "Big-Data-Visualisierung",
-            "Auf dem Weg zu neuem Wissen – Aufbereiten, Anreichern und Empfehlen",
+            "Auf dem Weg zu neuem Wissen – Aufbereiten, Anreichern und Empfehlen",  # noqa: RUF001, E501
             "Infrastruktur",
             "Programmiersprachen",
             "Polyglot Persistence",
@@ -66,9 +68,12 @@ class TestHanserDownload:
         assert result == expected_list
 
     def test_format_chapter_link(self):
-        """Tests format_chapter_link"""
+        """Tests format_chapter_link."""
         tag = BeautifulSoup(
-            '<a title="PDF" class="btn btn--light-bg" href="/doi/epdf/10.3139/9783446456013.012"><i aria-hidden="true" class="icon-PDF inline-icon"></i><span class="text">PDF</span></a>',
+            '<a title="PDF" class="btn btn--light-bg" '
+            'href="/doi/epdf/10.3139/9783446456013.012">'
+            '<i aria-hidden="true" class="icon-PDF '
+            'inline-icon"></i><span class="text">PDF</span></a>',
             "html.parser",
         ).a
         expected_result = (
@@ -79,7 +84,7 @@ class TestHanserDownload:
         assert result == expected_result
 
     def test_get_chapter_pdf_links_from_soup(self):
-        """Tests get_chapter_pdf_links_from_soup"""
+        """Tests get_chapter_pdf_links_from_soup."""
         expected_list = [
             "https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.fm",
             "https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.001",
@@ -111,8 +116,8 @@ class TestHanserDownload:
 
     @patch("download_pdfs.get_chapter_names_from_soup")
     @patch("download_pdfs.get_chapter_pdf_links_from_soup")
-    def test_get_chapter(self, link_mock, name_mock):
-        """Tests get_chapter"""
+    def test_get_chapter(self, link_mock: MagicMock, name_mock: MagicMock):
+        """Tests get_chapter."""
         link_mock.side_effect = [["/1", "/2", "/3"], ["/1", "/2", "/3"]]
         name_mock.side_effect = [["a", "b", "c"], ["/1", "/2"]]
         result1 = get_chapters(self.soup)
@@ -123,7 +128,7 @@ class TestHanserDownload:
         assert list(result2) == [(1, "", "/1"), (2, "", "/2"), (3, "", "/3")]
 
     def test_get_filename(self):
-        """Tests get_filename"""
+        """Tests get_filename."""
         result = get_filename(3, "test")
         assert isinstance(result, str)
         assert result == "003_test.pdf"
@@ -133,3 +138,33 @@ class TestHanserDownload:
         result = get_filename(12, "")
         assert isinstance(result, str)
         assert result == "012.pdf"
+
+    @patch("download_pdfs.requests.get")
+    def test_bad_response(self, get_mock: MagicMock):
+        """Tests treatment of bad response."""
+        dummy_status_code = 999
+        dummy_reason = "Test failed successfully!"
+        type(get_mock.return_value).ok = PropertyMock(return_value=False)
+        type(get_mock.return_value).status_code = PropertyMock(
+            return_value=dummy_status_code
+        )
+        type(get_mock.return_value).reason = PropertyMock(return_value=dummy_reason)
+        dummy_url = "dummy_url"
+        with pytest.raises(
+            SystemExit,
+            match=f".*{dummy_url}.*{dummy_status_code}.*{dummy_reason}.*Exiting!",
+        ):
+            make_request(dummy_url)
+
+    @patch("download_pdfs.requests.get")
+    def test_good_response(self, get_mock: MagicMock):
+        """Tests treatment of good response."""
+        dummy_url = "dummy_url"
+        dummy_status_code = 200
+        type(get_mock.return_value).ok = PropertyMock(return_value=True)
+        type(get_mock.return_value).status_code = PropertyMock(
+            return_value=dummy_status_code
+        )
+        test_response = make_request(dummy_url)
+        assert test_response.status_code == dummy_status_code
+        assert test_response.ok is True

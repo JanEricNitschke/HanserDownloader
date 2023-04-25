@@ -1,34 +1,37 @@
-"""Script to download all pdfs for a book from the hanser verlag
+#!/usr/bin/env python
+r"""Script to download all pdfs for a book from the hanser verlag.
 
 Typical usage example:
     python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
 """
-#!/usr/bin/env python
 
-import sys
-import os
-import typing
-import logging
-import re
+
 import argparse
-import requests
+import logging
+import os
+import re
+import sys
+from collections.abc import Iterable
+
 import bs4
+import requests
 from bs4 import BeautifulSoup
 
 
 def format_chapter_name(element: bs4.element.Tag) -> str:
-    """Extracts the text from a h5 element
+    """Extracts the text from a h5 element.
 
     Args:
         element (bs4.element.Tag): An h5 html element
 
     Returns:
-        Stripped string of the text of the element"""
+    Stripped string of the text of the element
+    """
     return element.text.strip()
 
 
 def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
-    """Extracts a list of chapter names from a soup from hanser-elibrary
+    r"""Extracts a list of chapter names from a soup from hanser-elibrary.
 
     For the Hanser Verlag the Chapter titles can be found like this (26.12.2022 9:07):
     <h5>Die Konkubinenwirtschaft</h5>
@@ -36,8 +39,10 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
     /html/body/div[1]/div/main/div[2]/div[2]/div/div[1]/div[3]/div[2]/div[1]/div/div/div[2]/div[1]/a/h5
     Get all h5 headings that do not have a class and get their inner text:
     Should result in a list like this:
-    ['Die Konkubinenwirtschaft', 'Nicht lange Fackeln', 'Auf und Nieder immer wieder', 'Immer flüssig', 'Wahaha', 'Stets starkes Signal', 'Mit Mann und Maus',
-    'QQ ohne IQ', 'Akku leer', 'Bohren für China', 'Über den Wolken', 'Haier und Higher', 'Störsender und Chinesin',
+    ['Die Konkubinenwirtschaft', 'Nicht lange Fackeln', 'Auf und Nieder immer wieder',
+    'Immer flüssig', 'Wahaha', 'Stets starkes Signal', 'Mit Mann und Maus',
+    'QQ ohne IQ', 'Akku leer', 'Bohren für China', 'Über den Wolken',
+    'Haier und Higher', 'Störsender und Chinesin',
     'Hochstapeln leicht gemacht', 'Meisterzeit', 'Literaturverzeichnis']
 
     Args:
@@ -52,32 +57,33 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
 
 
 def format_chapter_link(element: bs4.element.Tag) -> str:
-    """Extracts and formats the url from a link ('a') element
+    """Extracts and formats the url from a link ('a') element.
 
     Args:
         element (bs4.element.Tag): An 'a' element
 
     Returns:
-        A formatted version of the url contained in the link element"""
+    A formatted version of the url contained in the link element
+    """
     # Extract the raw link from the element
     base_link = element.get("href")  # /doi/epdf/10.3139/9783446456013.012
     if not isinstance(base_link, str):
         raise TypeError(
-            f"Did not find a singular href value. Expected a string but got {base_link} of type {type(base_link)} instead!"
+            "Did not find a singular href value. "
+            f"Expected a string but got {base_link} of type {type(base_link)} instead!"
         )
     # Add the proper domain in fron of it to get a functioning url
     full_link = (
         "https://www.hanser-elibrary.com" + base_link
     )  # https://www.hanser-elibrary.com/doi/epdf/10.3139/9783446456013.012
-    # Replace the 'epdf' with 'pdf' to get the url of the raw pdf without the custom viewer around it
-    direct_link = full_link.replace(
-        "epdf", "pdf"
-    )  # https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.012
-    return direct_link
+    # Replace the 'epdf' with 'pdf' to get the url of the raw pdf
+    # without the custom viewer around it
+    # https://www.hanser-elibrary.com/doi/pdf/10.3139/9783446456013.012
+    return full_link.replace("epdf", "pdf")
 
 
 def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
-    """Extracts a list of links to individual chapter pdfs from a soup from hanser-elibrary
+    """Extract a list of links to chapter pdfs from a soup from hanser-elibrary.
 
     Find all hyperlinks present on webpage
     For the Hanser Verlag the pdf link elements look like this (26.12.2022 8:48):
@@ -91,27 +97,28 @@ def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
         soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
 
     Returns:
-        A list of strings corresponding to the pdf links of the individual chapters of the book"""
+        A list of strings corresponding to the pdf links of the individual chapters of the book.
+    """  # noqa: E501
     pdf_link_elements = filter(
         lambda link: link.get("title") == "PDF", soup.find_all("a")
     )
-    link_urls = list(
+    return list(
         map(
             format_chapter_link,
             pdf_link_elements,
         )
     )
-    return link_urls
 
 
-def get_chapters(soup: BeautifulSoup) -> typing.Iterable[tuple[int, str, str]]:
-    """Create an iterable over chapter indices, names and links
+def get_chapters(soup: BeautifulSoup) -> Iterable[tuple[int, str, str]]:
+    """Create an iterable over chapter indices, names and links.
 
     Args:
         soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
 
     Returns:
-        Iterable over (index,name,link) of chapters on the webpage"""
+        Iterable over (index,name,link) of chapters on the webpage
+    """
     # Get the names of all the chapter
     names = get_chapter_names_from_soup(soup)
     # Get the urls for all the chapter pdfs
@@ -120,14 +127,14 @@ def get_chapters(soup: BeautifulSoup) -> typing.Iterable[tuple[int, str, str]]:
     # over (index,name,url) for each chapter
     indices = range(1, len(links) + 1)
     if len(names) == len(links):
-        return zip(indices, names, links)
+        return zip(indices, names, links, strict=True)
     # If there is a mismatch return an iterable over
     # (index, '', url) for each chapter
-    return zip(indices, [""] * len(links), links)
+    return zip(indices, [""] * len(links), links, strict=True)
 
 
 def get_filename(index: int, chapter_name: str) -> str:
-    """Create a filename for each chapter based on the chapter index and name
+    """Create a filename for each chapter based on the chapter index and name.
 
     Args:
         index (int): The index of the chapter
@@ -135,17 +142,39 @@ def get_filename(index: int, chapter_name: str) -> str:
                             Can be '' if no name was extracted
 
     Returns:
-        The filename that the pdf of the chapter should be saved to"""
+        The filename that the pdf of the chapter should be saved to
+    """
     fill_length = 3
-    if chapter_name != "":
+    if chapter_name:
         # Remove characters that windows does not allow in file names
         chapter_name = re.sub(r'[\\/*?:"<>|]', "", chapter_name)
         return f"{str(index).zfill(fill_length)}_{chapter_name}.pdf"
     return f"{str(index).zfill(fill_length)}.pdf"
 
 
-def main(args):
-    """Downloads pdf files from hanser elibrary"""
+def make_request(url: str) -> requests.Response:
+    """Tries to make a request for the given url.
+
+    Args:
+        url (str): Url to request.
+
+    Raises:
+        SystemExit: If the response is not `ok`.
+
+    Returns:
+        requests.Response: The successfull response to the request.
+    """
+    response = requests.get(url, timeout=100)
+    if not response.ok:
+        sys.exit(
+            f"Request to url: '{url}' was unsuccessful "
+            f"with response '{response.status_code}: {response.reason}'. Exiting!"
+        )
+    return response
+
+
+def main(args: list[str]) -> None:
+    """Downloads pdf files from hanser elibrary."""
     parser = argparse.ArgumentParser("Downloads pdf files from hanser elibrary")
     parser.add_argument(
         "-d", "--debug", action="store_true", default=False, help="Enable debug output."
@@ -193,16 +222,16 @@ def main(args):
     # URL from which pdfs to be downloaded
     url = options.url
 
-    # Do this instead of command line arguments so that it can be bundled as a simple exe that can be clicked
+    # Do this instead of command line arguments so that it can be
+    # bundled as a simple exe that can be clicked
     # It then opens a command line asking for the input
     # Alternatively it can also be bundled without this
-    # Then it has to be actively called from the command line and have the arguments entered there
+    # Then it has to be actively called from the command line and
+    # have the arguments entered there
     # But it still does not require a python installation then
-    # url = input("Enter the url you want to download things from:")
+    # url = input("Enter the url you want to download things from:") # noqa:  ERA001
 
-    # Requests URL and get response object
-    response = requests.get(url, timeout=100)
-
+    response = make_request(url)
     # Parse text obtained
     soup = BeautifulSoup(response.text, "html.parser")
 
