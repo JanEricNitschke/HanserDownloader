@@ -3,8 +3,7 @@ r"""Script to download all pdfs for a book from the hanser verlag.
 
 Typical usage example:
     python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
-"""
-
+"""  # pylint: disable=line-too-long
 
 import argparse
 import logging
