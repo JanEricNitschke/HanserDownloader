@@ -6,11 +6,8 @@ charset-normalizer==2.1.1
 colorama==0.4.6
 dill==0.3.6
 idna==3.4
-isort==5.11.4
 lazy-object-proxy==1.8.0
-mccabe==0.7.0
 platformdirs==2.6.0
-pylint==2.15.9
 requests==2.31.0
 soupsieve==2.3.2.post1
 tomli==2.0.1

@@ -50,7 +50,7 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
     Returns:
         A list of strings corresponding to the individual chapters of the book
     """
-    # Extract all h5 elements without an explicity class
+    # Extract all h5 elements without an explicit class
     # Take their text and put it into a list for indexing
     return list(map(format_chapter_name, soup.find_all("h5", {"class": ""})))
 
@@ -71,7 +71,7 @@ def format_chapter_link(element: bs4.element.Tag) -> str:
             "Did not find a singular href value. "
             f"Expected a string but got {base_link} of type {type(base_link)} instead!"
         )
-    # Add the proper domain in fron of it to get a functioning url
+    # Add the proper domain in front of it to get a functioning url
     full_link = (
         "https://www.hanser-elibrary.com" + base_link
     )  # https://www.hanser-elibrary.com/doi/epdf/10.3139/9783446456013.012
@@ -161,7 +161,7 @@ def make_request(url: str) -> requests.Response:
         SystemExit: If the response is not `ok`.
 
     Returns:
-        requests.Response: The successfull response to the request.
+        requests.Response: The successful response to the request.
     """
     response = requests.get(url, timeout=100)
     if not response.ok:
