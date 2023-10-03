@@ -47,7 +47,7 @@ class TestHanserDownload:
             "NoSQL und HBase",
             "Data Warehousing mit Hive",
             "Big-Data-Visualisierung",
-            "Auf dem Weg zu neuem Wissen – Aufbereiten, Anreichern und Empfehlen",  # noqa: RUF001, E501
+            "Auf dem Weg zu neuem Wissen – Aufbereiten, Anreichern und Empfehlen",  # noqa: RUF001
             "Infrastruktur",
             "Programmiersprachen",
             "Polyglot Persistence",
