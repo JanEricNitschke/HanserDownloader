@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+# pylint: disable=line-too-long
 r"""Script to download all pdfs for a book from the hanser verlag.
 
 Typical usage example:
     python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
-"""  # pylint: disable=line-too-long
+"""
+
 
 import argparse
 import logging
@@ -24,7 +26,7 @@ def format_chapter_name(element: bs4.element.Tag) -> str:
         element (bs4.element.Tag): An h5 html element
 
     Returns:
-    Stripped string of the text of the element
+        str: The stripped chapter name
     """
     return element.text.strip()
 
@@ -48,7 +50,7 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
         soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
 
     Returns:
-        A list of strings corresponding to the individual chapters of the book
+        list[str]: Individual chapters of the book
     """
     # Extract all h5 elements without an explicit class
     # Take their text and put it into a list for indexing
@@ -62,7 +64,10 @@ def format_chapter_link(element: bs4.element.Tag) -> str:
         element (bs4.element.Tag): An 'a' element
 
     Returns:
-    A formatted version of the url contained in the link element
+        str: The formatted chapter link.
+
+    Raises:
+        TypeError: If no fitting href value was found.
     """
     # Extract the raw link from the element
     base_link = element.get("href")  # /doi/epdf/10.3139/9783446456013.012
@@ -96,8 +101,8 @@ def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
         soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
 
     Returns:
-        A list of strings corresponding to the pdf links of the individual chapters of the book.
-    """  # noqa: E501
+        list[str]: Pdf links of the individual chapters of the book.
+    """
     pdf_link_elements = filter(
         lambda link: link.get("title") == "PDF", soup.find_all("a")
     )
@@ -116,7 +121,7 @@ def get_chapters(soup: BeautifulSoup) -> Iterable[tuple[int, str, str]]:
         soup (BeautifulSoup): BeautifulSoup for a hanser elibrary html page
 
     Returns:
-        Iterable over (index,name,link) of chapters on the webpage
+        Iterable[tuple[int, str, str]]: Iterable over (index,name,link) of chapters on the webpage
     """
     # Get the names of all the chapter
     names = get_chapter_names_from_soup(soup)
@@ -138,10 +143,10 @@ def get_filename(index: int, chapter_name: str) -> str:
     Args:
         index (int): The index of the chapter
         chapter_name (str): The extracted name for the chapter
-                            Can be '' if no name was extracted
+            Can be '' if no name was extracted
 
     Returns:
-        The filename that the pdf of the chapter should be saved to
+        str: The filename that the pdf of the chapter should be saved to
     """
     fill_length = 3
     if chapter_name:
@@ -157,11 +162,11 @@ def make_request(url: str) -> requests.Response:
     Args:
         url (str): Url to request.
 
-    Raises:
-        SystemExit: If the response is not `ok`.
-
     Returns:
         requests.Response: The successful response to the request.
+
+    Raises:
+        SystemExit: If the response is not `ok`.
     """
     response = requests.get(url, timeout=100)
     if not response.ok:

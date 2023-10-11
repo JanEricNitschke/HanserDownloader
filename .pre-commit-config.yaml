@@ -1,7 +1,7 @@
 exclude: .html
 repos:
   - repo: 'https://github.com/pre-commit/pre-commit-hooks'
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-yaml
         language: python
@@ -25,6 +25,12 @@ repos:
         language: python
       - id: check-builtin-literals
         language: python
+  - repo: https://github.com/JanEricNitschke/pymend
+    rev: "v1.0.8"
+    hooks:
+      - id: pymend
+        language: python
+        args: ["--write", "--check", "--output-style=google"]
   - repo: 'https://github.com/charliermarsh/ruff-pre-commit'
     rev: v0.0.292
     hooks:
@@ -38,7 +44,7 @@ repos:
       - id: black
         language: python
   - repo: https://github.com/crate-ci/typos
-    rev: v1.16.17
+    rev: v1.16.18
     hooks:
       - id: typos
         args: []
