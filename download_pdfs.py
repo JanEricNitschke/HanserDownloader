@@ -72,10 +72,11 @@ def format_chapter_link(element: bs4.element.Tag) -> str:
     # Extract the raw link from the element
     base_link = element.get("href")  # /doi/epdf/10.3139/9783446456013.012
     if not isinstance(base_link, str):
-        raise TypeError(
+        msg = (
             "Did not find a singular href value. "
             f"Expected a string but got {base_link} of type {type(base_link)} instead!"
         )
+        raise TypeError(msg)
     # Add the proper domain in front of it to get a functioning url
     full_link = (
         "https://www.hanser-elibrary.com" + base_link
@@ -103,15 +104,11 @@ def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
     Returns:
         list[str]: Pdf links of the individual chapters of the book.
     """
-    pdf_link_elements = filter(
-        lambda link: link.get("title") == "PDF", soup.find_all("a")
-    )
-    return list(
-        map(
-            format_chapter_link,
-            pdf_link_elements,
-        )
-    )
+    return [
+        format_chapter_link(link)
+        for link in soup.find_all("a")
+        if link.get("title") == "PDF"
+    ]
 
 
 def get_chapters(soup: BeautifulSoup) -> Iterable[tuple[int, str, str]]:
