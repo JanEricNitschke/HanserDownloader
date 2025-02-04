@@ -54,7 +54,8 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
     # Extract all h5 elements without an explicit class
     # Take their text and put it into a list for indexing
     return [
-        format_chapter_name(element) for element in soup.find_all("h5", {"class": ""})
+        format_chapter_name(element)
+        for element in soup.find_all("h5", {"class": False})
     ]
 
 
