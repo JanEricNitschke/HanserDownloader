@@ -18,16 +18,16 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def format_chapter_name(element: bs4.element.Tag) -> str:
+def format_chapter_name(element: bs4.element.PageElement) -> str:
     """Extracts the text from a h5 element.
 
     Args:
-        element (bs4.element.Tag): An h5 html element
+        element (bs4.element.PageElement): An h5 html element
 
     Returns:
         str: The stripped chapter name
     """
-    return element.text.strip()
+    return element.get_text().strip()
 
 
 def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
@@ -53,7 +53,9 @@ def get_chapter_names_from_soup(soup: BeautifulSoup) -> list[str]:
     """
     # Extract all h5 elements without an explicit class
     # Take their text and put it into a list for indexing
-    return list(map(format_chapter_name, soup.find_all("h5", {"class": ""})))
+    return [
+        format_chapter_name(element) for element in soup.find_all("h5", {"class": ""})
+    ]
 
 
 def format_chapter_link(element: bs4.element.Tag) -> str:
@@ -106,7 +108,7 @@ def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
     return [
         format_chapter_link(link)
         for link in soup.find_all("a")
-        if link.get("title") == "PDF"
+        if isinstance(link, bs4.element.Tag) and link.get("title") == "PDF"
     ]
 
 
