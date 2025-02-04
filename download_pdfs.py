@@ -6,7 +6,6 @@ Typical usage example:
     python download_pdfs.py --dir "D:\\Downloads\\Hanser\\" --url "https://www.hanser-elibrary.com/isbn/9783446453968"
 """
 
-
 import argparse
 import logging
 import os
