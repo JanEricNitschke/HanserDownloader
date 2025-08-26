@@ -17,6 +17,8 @@ import bs4
 import requests
 from bs4 import BeautifulSoup
 
+logger = logging.getLogger(__name__)
+
 
 def format_chapter_name(element: bs4.element.PageElement) -> str:
     """Extracts the text from a h5 element.
@@ -218,7 +220,7 @@ def main(args: list[str]) -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-    logging.info(
+    logger.info(
         "Running with output directory: %s and URL: %s", options.dir, options.url
     )
 
@@ -241,21 +243,21 @@ def main(args: list[str]) -> None:
     # From all links check for pdf link and
     # if present download file
     for index, name, link_url in get_chapters(soup):
-        logging.info("Downloading file: %s", index)
+        logger.info("Downloading file: %s", index)
 
-        logging.info("Downloading pdf from link: %s", link_url)
+        logger.info("Downloading pdf from link: %s", link_url)
 
         # Get response object for link
         response = requests.get(link_url, timeout=100)
 
         # Write content in pdf file
         filename = os.path.join(options.dir, get_filename(index, name))
-        logging.info("Saving file to %s", filename)
+        logger.info("Saving file to %s", filename)
         with open(filename, "wb") as pdf:
             pdf.write(response.content)
-        logging.info("File %s downloaded", index)
+        logger.info("File %s downloaded", index)
 
-    logging.info("All PDF files downloaded")
+    logger.info("All PDF files downloaded")
 
 
 if __name__ == "__main__":
