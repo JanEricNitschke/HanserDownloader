@@ -2,4 +2,4 @@ pre-commit==4.3.0
 pylint==3.3.8
 pyright==1.1.405
 pytest==8.4.2
-pytest-cov==6.3.0
+pytest-cov==7.0.0
