@@ -111,7 +111,7 @@ def get_chapter_pdf_links_from_soup(soup: BeautifulSoup) -> list[str]:
     return [
         format_chapter_link(link)
         for link in soup.find_all("a")
-        if isinstance(link, bs4.element.Tag) and link.get("title") == "PDF"
+        if link.get("title") == "PDF"
     ]
 
 
