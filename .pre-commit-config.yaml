@@ -26,13 +26,13 @@ repos:
       - id: check-builtin-literals
         language: python
   - repo: https://github.com/JanEricNitschke/pymend
-    rev: "v1.1.0"
+    rev: "v2.1.1"
     hooks:
       - id: pymend
         language: python
         args: ["--write", "--check", "--output-style=google"]
   - repo: 'https://github.com/charliermarsh/ruff-pre-commit'
-    rev: v0.13.2
+    rev: v0.15.8
     hooks:
       - id: ruff-check
         args:
@@ -40,7 +40,7 @@ repos:
           - '--exit-non-zero-on-fix'
       - id: ruff-format
   - repo: https://github.com/crate-ci/typos
-    rev: v1.36.3
+    rev: v1.44.0
     hooks:
       - id: typos
         args: []
