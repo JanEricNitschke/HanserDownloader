@@ -30,6 +30,9 @@ build-backend = "hatchling.build"
 packages = ["."]
 only-include = ["download_pdfs.py"]
 
+[tool.uv]
+exclude-newer = "7 days"
+
 [tool.pymend]
 extend-exclude = "docs/|tests/"
 output-style   = "google"

@@ -7,6 +7,10 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[options]
+exclude-newer = "2026-04-05T05:52:21.8351878Z"
+exclude-newer-span = "P7D"
+
 [[package]]
 name = "astroid"
 version = "4.0.2"
