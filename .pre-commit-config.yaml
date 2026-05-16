@@ -26,7 +26,7 @@ repos:
       - id: check-builtin-literals
         language: python
   - repo: https://github.com/JanEricNitschke/pymend
-    rev: "v3.0.0"
+    rev: "v3.2.1"
     hooks:
       - id: pymend
         language: python
