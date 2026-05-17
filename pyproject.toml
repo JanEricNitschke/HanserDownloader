@@ -37,7 +37,6 @@ exclude-newer = "7 days"
 extend-exclude = "docs/|tests/"
 output-style   = "google"
 input-style    = "google"
-check          = true
 
 [tool.ruff]
 # Assume Python 3.10.
